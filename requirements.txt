@@ -1,0 +1,8 @@
+streamlit
+pandas
+plotly
+Pillow
+google-genai
+python-dotenv
+ipython
+gspread
