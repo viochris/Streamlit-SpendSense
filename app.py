@@ -56,6 +56,8 @@ st.markdown(
 with st.sidebar:
     st.header("⚙️ Configuration")
 
+    st.markdown("<br>", unsafe_allow_html=True)
+
     # Mapping dictionary to display user-friendly labels with icons 
     # while maintaining valid backend string values for logic control.
     mode_icons = {
@@ -558,15 +560,15 @@ elif part == "Dashboard":
 
     # 5. Comparative Analysis (Income vs Expense)
     # Tagging data for merged visualization
-    df_expense["Type"] = "Expense" 
-    df_income["Type"] = "Income"
+    df_expense["Type"] = ["Expense"] * len(df_expense)
+    df_income["Type"] = ["Income"] * len(df_income)
 
     if len(df_expense) > 0 and len(df_income) > 0:
         # Merge datasets to create a comparative bar chart
         df_all = pd.concat([df_expense, df_income], axis=0)
         
-        total_by_type = df_all.groupby("Type")["Total"].sum()
-        st.bar_chart(x=total_by_type.index, y=total_by_type.values)
+        total_by_type = df_all.groupby("Type")["Total"].sum().reset_index()
+        st.bar_chart(data= total_by_type, x="Type", y="Total", color="Type")
     else:
         st.warning("⚠️ **Insufficient Data:** Both Income and Expense records are required to generate the comparison chart.")
 
