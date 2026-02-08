@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
 import json
 from datetime import datetime, timedelta
 from PIL import Image
 from google import genai
+from dotenv import load_dotenv
 
 # Import custom functions from local module
 from function import (
@@ -21,6 +23,10 @@ from function import (
 # ==========================================
 # Initialize session state for data persistence
 init_state()
+
+# Load environment variables
+load_dotenv()
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Configure global page settings, including the browser tab title and icon
 st.set_page_config(
@@ -72,7 +78,7 @@ with st.sidebar:
 # ==========================================
 # Initialize Google Gemini Client
 # Uses session state key if available, otherwise relies on .env fallback
-client = genai.Client()
+client = genai.Client(api_key=GOOGLE_API_KEY)
 
 # Set current timezone (UTC+7 for WIB)
 current_time = (datetime.utcnow() + timedelta(hours=7))
