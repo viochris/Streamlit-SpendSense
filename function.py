@@ -75,7 +75,7 @@ def send_income(datetime, from_where, category, total):
     """
     if datetime and from_where and category and total:
         datetime = datetime.strftime("%Y-%m-%d %H:%M:%S")
-        ws_expense.append_row([datetime, from_where.title(), category, total])
+        ws_income.append_row([datetime, from_where.title(), category, total])
 
 # ==========================================
 # DATA RETRIEVAL FUNCTIONS
