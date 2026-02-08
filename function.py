@@ -3,12 +3,23 @@ import pandas as pd
 import numpy as np
 import gspread
 import datetime
+import json
 
 # ==========================================
 # GOOGLE SHEETS AUTHENTICATION & SETUP
 # ==========================================
-# Authenticate using the service account JSON key file
-gc = gspread.service_account("chatbot_key.json")
+
+# 1. Retrieve the raw JSON string from Streamlit secrets
+# Accessing the 'gcp_json' key nested under '[files]' in secrets.toml
+raw_json_string = st.secrets["files"]["gcp_json"]
+
+# 2. Parse the string into a Python dictionary
+# Converts the raw string format back into a valid JSON object
+credentials = json.loads(raw_json_string)
+
+# 3. Authenticate with Google Sheets API
+# Establishes connection using the parsed credentials dictionary
+gc = gspread.service_account_from_dict(credentials)
 
 # Open the main spreadsheet named "Report"
 sh = gc.open("Report")
