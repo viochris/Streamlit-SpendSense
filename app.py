@@ -615,19 +615,59 @@ elif part == "Dashboard":
         else:
             st.info("ℹ️ No income data available for analysis.")   
 
-    # 7. Behavioral Insight: Most Visited Places
-    if len(df_expense) > 0:
-        most_visited_store = df_expense["Place Name"].value_counts().head(3).index
-        total_visited_store = len(most_visited_store)
+# 7. Behavioral Insight: Top Ranking (Expenses vs Income)
+    # Split the layout into two columns
+    col_expense, col_income = st.columns(2)
 
-        st.markdown("### 🏆 Top 3 Most Visited Places")
-        
-        if total_visited_store == 3:
-            for i, store in enumerate(most_visited_store, 1):
-                st.markdown(f"{i}. 🏪 **{store}**")
-        elif total_visited_store > 0 and total_visited_store < 3:
-            for store in most_visited_store:
-                st.markdown(f"- 🏪 {store}")
-            st.info(f"ℹ️ You have only visited **{total_visited_store}** distinct locations: **{', '.join(most_visited_store)}**.")
-        else:
-            st.info("ℹ️ Not enough data to generate store ranking.")
+    # --- LEFT COLUMN: EXPENSE RANKING ---
+    with col_expense:
+        if len(df_expense) > 0:
+            # Calculate top 3 most frequent places visited
+            most_visited_store = df_expense["Place Name"].value_counts().head(3).index
+            total_visited_store = len(most_visited_store)
+
+            st.markdown("### 🏆 Top 3 Most Visited Places")
+            
+            # Scenario A: User has visited exactly 3 or more unique places
+            if total_visited_store == 3:
+                for i, store in enumerate(most_visited_store, 1):
+                    st.markdown(f"{i}. 🏪 **{store}**")
+            
+            # Scenario B: User has visited less than 3 unique places
+            elif total_visited_store > 0 and total_visited_store < 3:
+                for store in most_visited_store:
+                    st.markdown(f"- 🏪 {store}")
+                
+                # Insight message
+                st.info(f"ℹ️ You have only visited **{total_visited_store}** distinct locations: **{', '.join(most_visited_store)}**.")
+            
+            # Scenario C: Data exists but list is empty (Safety fallback)
+            else:
+                st.info("ℹ️ Not enough data to generate store ranking.")
+
+    # --- RIGHT COLUMN: INCOME RANKING ---
+    with col_income:
+        if len(df_income) > 0:
+            # Calculate top 3 most frequent income sources
+            # Note: Ensure your dataframe has "From Where" column, or change to "Place Name" if consistent with expense
+            top_money_source = df_income["From Where"].value_counts().head(3).index
+            total_money_source = len(top_money_source)
+
+            st.markdown("### 💰 Top 3 Income Sources")
+            
+            # Scenario A: User has exactly 3 or more unique income sources
+            if total_money_source == 3:
+                for i, source in enumerate(top_money_source, 1):
+                    st.markdown(f"{i}. 🏦 **{source}**")
+            
+            # Scenario B: User has less than 3 unique income sources
+            elif total_money_source > 0 and total_money_source < 3:
+                for source in top_money_source:
+                    st.markdown(f"- 🏦 {source}")
+                
+                # Insight message (Corrected context from 'visited' to 'received from')
+                st.info(f"ℹ️ You have received money from **{total_money_source}** distinct sources: **{', '.join(top_money_source)}**.")
+            
+            # Scenario C: Safety fallback
+            else:
+                st.info("ℹ️ Not enough data to generate income ranking.")
