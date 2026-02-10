@@ -8,6 +8,7 @@ google-genai
 python-dotenv
 ipython
 gspread
+tabulate
 langchain==1.2.7
 langchain-experimental==0.4.1
 langchain-google-genai==2.1.12
