@@ -1113,11 +1113,11 @@ elif part == "Ask AI":
     st.subheader("✨ Smart Financial Assistant")
 
     st.button(
-        "🔴 Hard Reset System",
-        type="primary",
-        on_click=reset_state,
-        use_container_width=True,
-        help="Resets uploaded files, chat history, and AI memory. Your API Key remains active."
+        "🔴 Reset AI & Chat Memory", 
+        type="primary", 
+        on_click=reset_state, 
+        use_container_width=True, 
+        help="Clears the current conversation and forces SpendSense to re-read your data from scratch. Use this if the AI gets confused."
     )
 
     # ==========================================
@@ -1236,7 +1236,7 @@ elif part == "Ask AI":
                 - NEVER write "Thought:" without "Action:".
                 
                 ### MEMORY
-                {{chat_history}}
+                {chat_history}
                 """
 
                 # ------------------------------------------
