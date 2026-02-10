@@ -23,6 +23,7 @@ from langchain_classic.memory import ConversationBufferMemory
 # --- Local Modules ---
 from function import (
     init_state, 
+    reset_state,
     change_on_upload, 
     send_expense, 
     send_income, 
@@ -95,21 +96,6 @@ with st.sidebar:
         help="Select the module you want to access."
     )
 
-    # 3. Context-Specific Filters
-    # Initialize variable to None to ensure it exists even if Dashboard is not selected.
-    chosed_filter_mode = None
-
-    # Only display the Time Filter if the user is on the Dashboard
-    if part == "Dashboard":
-        st.markdown("---") # Add a divider line
-        
-        chosed_filter_mode = st.radio(
-            "📅 View Mode",
-            ["Monthly", "Yearly"],
-            index=0,
-            help="Select the time granularity: Monthly (Day-by-Day) or Yearly (Month-by-Month)."
-        )
-
 # ==========================================
 # 4. APPLICATION LOGIC
 # ==========================================
@@ -124,6 +110,7 @@ current_time = (datetime.utcnow() + timedelta(hours=7))
 # MODULE: EXPENSE TRACKER
 # ------------------------------------------
 if part == "Expense":
+    # Add visual separation and main title
     st.divider()
     st.subheader("💸 Track New Expense")
 
@@ -341,6 +328,7 @@ if part == "Expense":
 # MODULE: INCOME TRACKER
 # ------------------------------------------
 elif part == "Income":
+    # Add visual separation and main title
     st.divider()
     st.subheader("💰 Record New Income")
     
@@ -557,15 +545,36 @@ elif part == "Income":
             st.info("ℹ️ Please fill in the form above.")
 
 elif part == "Dashboard":
+    # Add visual separation and main title
     st.divider()
     st.subheader("🚀 Financial Dashboard")
 
     # ==========================================
     # 1. Control Panel & Data Initialization
     # ==========================================
-    # Button to force a fresh data reload
-    if st.button("🔄 Refresh Data", help="Reload latest transactions from Google Sheets."):
-        st.rerun()
+    # Create a 2-column layout to organize controls side-by-side.
+    # Left column for Refresh, Right column for Mode selection.
+    refresh, mode = st.columns(2)
+
+    # --- Column 1: Refresh Logic ---
+    with refresh:
+        # Button to force a fresh data reload from the database (Google Sheets)
+        if st.button("🔄 Refresh Data", help="Reload latest transactions from Google Sheets."):
+            st.rerun()
+
+    # --- Column 2: View Mode Selection ---
+    with mode:
+        # Toggle between Monthly (Detailed) and Yearly (Overview) views.
+        # 'horizontal=True' renders buttons side-by-side for a cleaner look.
+        chosed_filter_mode = st.radio(
+            "📅 View Mode",
+            ["Monthly", "Yearly"],
+            index=0,
+            horizontal=True,
+            help="Select the time granularity: Monthly (Day-by-Day) or Yearly (Month-by-Month)."
+        )
+
+    st.markdown("---") # Add a divider line
 
     # Fetch latest dataframes
     df_expense = get_expense()
@@ -880,6 +889,7 @@ elif part == "Dashboard":
                 st.info("ℹ️ Not enough data to generate income ranking.")
 
 elif part == "Comparison":
+    # Add visual separation and main title
     st.divider()
     st.subheader("📊 Data Comparison & Trends")
 
@@ -1034,6 +1044,7 @@ elif part == "Comparison":
         st.info("Please select data parameters above to generate the chart.", icon="👆")
 
 elif part == "Edit & Delete":
+    # Add visual separation and main title
     st.divider()
     st.subheader("✏️ Manage Data (Edit & Delete)")
 
@@ -1097,6 +1108,18 @@ elif part == "Edit & Delete":
             send_update(edited_df_expense, "Expense")
     
 elif part == "Ask AI":
+    # Add visual separation and main title
+    st.divider()
+    st.subheader("✨ Smart Financial Assistant")
+
+    st.button(
+        "🔴 Hard Reset System",
+        type="primary",
+        on_click=reset_state,
+        use_container_width=True,
+        help="Resets uploaded files, chat history, and AI memory. Your API Key remains active."
+    )
+
     # ==========================================
     # 1. Data Loading
     # ==========================================

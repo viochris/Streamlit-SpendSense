@@ -58,6 +58,23 @@ def init_state():
     if "agent_memory" not in st.session_state:
         st.session_state.agent_memory = None
 
+def reset_state():
+    """
+    Performs a full system reset.
+    This function clears ALL session state variables, including uploaded files,
+    the active dataframe, the LLM, and the agent executor. It effectively
+    restarts the user session from scratch.
+    """
+    st.session_state.messages = []
+    st.session_state.agent_memory = None
+    st.session_state.llm = None
+    
+    # Safely remove the 'agent_executor' from session state if it exists
+    # This forces the app to rebuild the agent with fresh settings next time
+    st.session_state.pop("agent_executor", None)
+    
+    st.toast("System state has been fully reset!", icon="🔄")
+
 def change_on_upload():
     """
     Callback function triggered when a new image is uploaded or captured.
