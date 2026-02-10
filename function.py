@@ -4,6 +4,7 @@ import numpy as np
 import gspread
 import datetime
 import json
+import time
 
 # ==========================================
 # GOOGLE SHEETS AUTHENTICATION & SETUP
@@ -34,10 +35,28 @@ ws_income = sh.worksheet("Income")
 def init_state():
     """
     Initialize Streamlit session state variables.
-    Ensures 'scanned_data' exists to prevent KeyErrors during app startup.
+    Ensures key variables exist to prevent KeyErrors during app startup.
     """
+    
+    # 1. Chat History
+    # Stores the conversation log between User and AI.
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # 2. Scanned Data Placeholder
+    # Used for OCR or camera input data storage.
     if "scanned_data" not in st.session_state:
         st.session_state.scanned_data = None
+
+    # 3. Language Model Instance
+    # Singleton pattern to avoid reloading the LLM on every rerun.
+    if "llm" not in st.session_state:
+        st.session_state.llm = None
+    
+    # 4. Agent Memory
+    # Stores context/history for the LangChain agent.
+    if "agent_memory" not in st.session_state:
+        st.session_state.agent_memory = None
 
 def change_on_upload():
     """
@@ -118,3 +137,93 @@ def get_income():
         st.info("No Report for Income")
 
     return df
+
+def send_update(edited_df, type_name):
+    """
+    Handles safe updates to Google Sheets with Auto-Backup and Rollback features.
+    
+    Args:
+        edited_df (DataFrame): The modified data from Streamlit Data Editor.
+        type_name (str): The target sheet name ("Income" or "Expense").
+    """
+    
+    # Initialize worksheet connections
+    ws_main = sh.worksheet(type_name)
+    ws_backup = sh.worksheet("Backup")
+
+    # ==========================================
+    # STEP 1: AUTO-BACKUP (SAFETY FIRST)
+    # ==========================================
+    try:
+        # Retrieve existing data before modification
+        old_data = ws_main.get_all_values()
+        
+        # Clear the backup sheet to remove old artifacts
+        ws_backup.clear() 
+        
+        # Save the current state to the backup sheet
+        if len(old_data) > 0:
+            ws_backup.append_rows(old_data)
+            time.sleep(1) # Pause to prevent API rate limiting
+            
+    except Exception as e:
+        # If backup fails, stop the process immediately to prevent data loss
+        st.error(f"Backup Failed: {e}")
+        return False 
+
+    # ==========================================
+    # STEP 2: MAIN UPDATE EXECUTION
+    # ==========================================
+    try:
+        # Clear the main sheet to prepare for new data
+        ws_main.clear()
+        
+        # 1. Upload Header (Column Names)
+        ws_main.append_row(edited_df.columns.tolist())
+
+        # 2. Prepare Data Body
+        # CRITICAL: Convert all data to STRING to avoid JSON serialization errors
+        # (e.g., Timestamp objects causing API crashes)
+        clean_df = edited_df.astype(str) 
+        body_data = clean_df.values.tolist()
+        
+        # 3. Batch Upload
+        # Upload data in chunks of 1000 rows to ensure stability
+        total_data = len(body_data)
+        if total_data > 0:
+            for i in range(0, total_data, 1000):
+                chunk = body_data[i : i + 1000]
+                ws_main.append_rows(chunk)
+                time.sleep(1)
+
+        # 4. Cleanup & Success
+        # Clear backup since the operation was successful
+        ws_backup.clear()
+        
+        st.success(f"✅ Successfully updated {type_name}!")
+        time.sleep(1)
+        st.rerun() # Refresh the app to show new data
+        return True
+
+    # ==========================================
+    # STEP 3: EMERGENCY RESTORE (ROLLBACK)
+    # ==========================================
+    except Exception as e:
+        st.error(f"⚠️ Update Error: {e}. Restoring previous data...")
+        
+        # Retrieve data from the backup sheet
+        backup_data = ws_backup.get_all_values()
+        
+        # Clear the corrupted main sheet
+        ws_main.clear()
+        
+        # Restore original data in batches
+        if len(backup_data) > 0:
+            for i in range(0, len(backup_data), 1000):
+                chunk = backup_data[i : i + 1000]
+                ws_main.append_rows(chunk)
+                time.sleep(1)
+        
+        # Clean up backup sheet
+        ws_backup.clear()
+        return False
